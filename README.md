@@ -1,190 +1,166 @@
 <nb-card accent="primary" class="">
-    <ng-container *ngIf="projets">
-        <nb-card-body *ngIf="errorMessage">
-          <div class="alert alert-danger" role="alert">
-            {{ errorMessage }}
-          </div>
-        </nb-card-body>
-        <nb-card-header class="d-flex flex-row justify-content-between">
-          <h5 class="title-animation title-heading text-uppercase my-auto p-2">Gestion des Projets</h5>
-        </nb-card-header>
-        <nb-card-body>
-          <div class="d-flex flex-row justify-content">
-            <div class="custom-context-menu">
-              <button type="submit" (click)="toggleContextMenu()" class="d-flex btn custom-bg m-1" id="btn-columns">
-                <div class="d-flex flex-row justify-content">
-                  <div class="m-1">
-                    Colonnes
-                  </div>
-                  <div class="m-1">
-                    <nb-icon pack="eva" [icon]="showColumnContextMenu?'arrow-circle-up-outlinee':'arrow-circle-down-outline'"></nb-icon>
-                  </div>
-                </div>
-              </button>
-              <ul class="context-menu-box" *ngIf="showColumnContextMenu">
-                <li *ngFor="let col of columns" class="column_items"
-                    (click)="showColumn(col.label)">
-                  <div class="d-flex flex-row justify-content">
-                    <div class="m-1">
-                      <nb-icon pack="eva" *ngIf="displayColumns.includes(col.label)" icon="checkmark-square-2-outline"></nb-icon>
-                      <nb-icon pack="eva" *ngIf="!displayColumns.includes(col.label)" icon="done-all-outline"></nb-icon>
-                    </div>
-                    <div class="m-1">
-                      {{col.label}}
-                    </div>
-                  </div>
-                </li>
-              </ul>
+  <ng-container *ngIf="users">
+    <nb-card-body *ngIf="errorMessage">
+      <div class="alert alert-danger" role="alert">
+        {{ errorMessage }}
+      </div>
+    </nb-card-body>
+    <nb-card-header class="d-flex flex-row justify-content-between">
+      <h5 class="title-animation title-heading text-uppercase my-auto p-2">Gestion des Utilisateurs</h5>
+    </nb-card-header>
+    <nb-card-body>
+      <div class="d-flex flex-row justify-content">
+        <div class="custom-context-menu">
+          <button type="submit" (click)="toggleContextMenu()" class="d-flex btn custom-bg m-1" id="btn-columns">
+            <div class="d-flex flex-row justify-content">
+              <div class="m-1">
+                Colonnes
+              </div>
+              <div class="m-1">
+                <nb-icon pack="eva" [icon]="showColumnContextMenu?'arrow-circle-up-outlinee':'arrow-circle-down-outline'"></nb-icon>
+              </div>
             </div>
-          </div>
-         
-         
-         
-          <ng-template [ngIf]="projets">
-            <table class="table w-100">
-              <thead class="bg-header fw-bold">
-              <tr >
-                <td *ngFor="let column of columns" (click)="sortBy(column.key)"
-                    class=" p-3 border border-end-white">
-                  <div class="d-flex justify-content-between">
-                    <div>
-                      {{ column.label }}
-                    </div>
-                    <div [ngClass]="(keyword==column.key)? 'text-black':'text-white'">
-                                  <span >
-                                  <nb-icon *ngIf="direction" pack="eva" icon="arrow-circle-up-outline"></nb-icon>
-                                  </span>
-                      <span>
-                                  <nb-icon *ngIf="!direction" pack="eva" icon="arrow-downward-outline"></nb-icon>
-                                  </span>
-                    </div>
-          
-                  </div>
-                </td>
-                <td colspan="2" class=" p-3 border border-end-white">Actions</td>
-              </tr>
-              </thead>
-              <tbody>
-              <tr>
-                <td *ngFor="let column of columns">
-                  <form [formGroup]="searchFormGroup">
-                    <ng-template [ngIf]="column.key==='firstname'">
-                      <nb-select
-                        formControlName="{{column.key}}"
-                        selected=""
-                        (selectedChange)="searchSubject.next()"
-                      >
-                      </nb-select>
-                    </ng-template>
-                    <ng-template [ngIf]="column.key==='natureColaborateur'">
-                      <nb-select
-                        formControlName="{{column.key}}"
-                        selected=""
-                        (selectedChange)="searchSubject.next()"
-                      >
-
-                      </nb-select>
-                    </ng-template>
-                    <ng-template [ngIf]="column.key!=='natureColaborateur' && column.key!=='enabled'">
-                      <input
-                        formControlName="{{column.key}}"
-                        class="form-control"
-                        placeholder="{{column.label}}"
-                        (input)="searchSubject.next()"
-                      >
-                    </ng-template>
-                  </form>
-                </td>
-                <td>
-                  <a (click)="onAddNewObject()" class="text-decoration-none float-right">
-                    <button type="button" class="d-flex btn btn-dark m-auto" (click)="onAddItem()">
-          
-                      <div class="addNewUser">Ajouter</div>
-                    </button>
-                  </a>
-                </td>
-              </tr>
-              <tr *ngFor="let data of projets.content">
-                <td *ngFor="let column of columns" class="px-4">{{ getColumnValue(data, column.key)}}</td>
-                <td class="editIcon text-center">
-                  <nb-icon pack="eva" class="btn-details" style="color:darkorange" icon="edit-outline"  (click)="onUpdateProject(data.id)"></nb-icon>
-                    <nb-icon pack="eva" class="btn-details" icon="trash-outline" style="color: red" (click)="onDeleteProject(data.id)"></nb-icon>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-            <nb-card-footer>
-              <div class="d-flex justify-content-between">
-                <ul class="list-group list-group-horizontal">
-                  <li class="list-group-item">
-                    <button (click)="onPageNumberChange(0)"
-                            [ngClass]="projets.first ? 'text-gray disabled border-light' : 'text-black'" class="btn">
-                      <span><<</span>
-                    </button>
-                  </li>
-                  <li class="list-group-item">
-                    <button (click)="onPageNumberChange(projets.number-1)"
-                            [ngClass]="projets.first ?  'text-gray disabled border-light' : 'text-black'" class="btn">
-                      <nb-icon pack="eva" icon="arrow-circle-right-outline"></nb-icon>
-                    </button>
-                  </li>
-                  <li class="list-group-item"
-                      *ngFor='let nbr of toTotalPages(projets.totalPages <9 ? projets.totalPages : 9) ;let i = index'>
-          
-                      <span
-                        *ngIf="(projets.number <= projets.totalPages-9) || (projets.totalPages <9);else printlastPages">
-                        <button (click)="onPageNumberChange(projets.number <= 5 ? i : projets.number-4+i)"
-                                [ngClass]="projets.number==(projets.number <= 5 ? i : projets.number-4 + i) ?'text-black custom-bg' : 'text-balck'"
-                                class="btn ">
-                          {{(projets.number <= 5 ? 1 + i : projets.number - 3 + i)}}
-                        </button>
-                      </span>
-                    <ng-template #printlastPages>
-                      <button (click)="onPageNumberChange(projets.totalPages - 9 + i)"
-                              [ngClass]="projets.number==(projets.totalPages - 9 + i) ?'text-light custom-bg' : 'text-black'"
-                              class="btn ">
-                        {{(projets.totalPages - 8 + i)}}
-                      </button>
-                    </ng-template>
-          
-                  </li>
-                  <li class="list-group-item">
-                    <button (click)="onPageNumberChange(projets.number+1)"
-                            [ngClass]="projets.last ? 'text-gray disabled border-light' : 'text-black'" class="btn">
-                      <nb-icon icon="arrow-circle-left-outline" pack="eva"></nb-icon>
-                    </button>
-                  </li>
-                  <li class="list-group-item">
-                    <button (click)="onPageNumberChange(projets.totalPages -1 )"
-                            [ngClass]="projets.last ? 'text-gray disabled border-light' : 'text-black'" class="btn">
-                      <span>>></span>
-                    </button>
-                  </li>
-                </ul>
-                <div>Éléments par page :
-                  <nb-select size="small" placeholder="Élément par page" selected="{{data?.size}}"
-                             (selectedChange)="onElementPerPageChange($event)">
-                    <nb-option value="10">10</nb-option>
-                    <nb-option value="20">20</nb-option>
-                    <nb-option value="50">50</nb-option>
-                    <nb-option value="100">100</nb-option>
-                  </nb-select>
+          </button>
+          <ul class="context-menu-box" *ngIf="showColumnContextMenu">
+            <li *ngFor="let col of columns" class="column_items" (click)="showColumn(col.label)">
+              <div class="d-flex flex-row justify-content">
+                <div class="m-1">
+                  <nb-icon pack="eva" *ngIf="displayColumns.includes(col.label)" icon="checkmark-square-2-outline"></nb-icon>
+                  <nb-icon pack="eva" *ngIf="!displayColumns.includes(col.label)" icon="done-all-outline"></nb-icon>
+                </div>
+                <div class="m-1">
+                  {{col.label}}
                 </div>
               </div>
-            </nb-card-footer>
-          </ng-template>
-          <ng-template [ngIf]="!projets">
-            <nb-card-body>
-              Aucun Projet pour le moment
-            </nb-card-body>
-          </ng-template>
-   </nb-card-body>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <ng-template [ngIf]="users">
+        <table class="table w-100">
+          <thead class="bg-header fw-bold">
+            <tr>
+              <td *ngFor="let column of columns" (click)="sortBy(column.key)" class=" p-3 border border-end-white">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    {{ column.label }}
+                  </div>
+                  <div [ngClass]="(keyword==column.key)? 'text-black':'text-white'">
+                    <span>
+                      <nb-icon *ngIf="direction" pack="eva" icon="arrow-circle-up-outline"></nb-icon>
+                    </span>
+                    <span>
+                      <nb-icon *ngIf="!direction" pack="eva" icon="arrow-downward-outline"></nb-icon>
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td colspan="2" class=" p-3 border border-end-white">Actions</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td *ngFor="let column of columns">
+                <form [formGroup]="searchFormGroup">
+                  <ng-template [ngIf]="column.key==='firstName'">
+                    <input formControlName="{{column.key}}" class="form-control" placeholder="{{column.label}}" (input)="searchSubject.next()">
+                  </ng-template>
+                  <ng-template [ngIf]="column.key==='enabled'">
+                    <nb-select formControlName="{{column.key}}" selected="" (selectedChange)="searchSubject.next()">
+                      <nb-option value="true">Enabled</nb-option>
+                      <nb-option value="false">Disabled</nb-option>
+                    </nb-select>
+                  </ng-template>
+                </form>
+              </td>
+              <td>
+                <a (click)="onAddNewUser()" class="text-decoration-none float-right">
+                  <button type="button" class="d-flex btn btn-dark m-auto" (click)="onAddUser()">
+                    <div class="addNewUser">Ajouter</div>
+                  </button>
+                </a>
+              </td>
+            </tr>
+            <tr *ngFor="let user of users.content">
+              <td *ngFor="let column of columns" class="px-4">{{ getColumnValue(user, column.key) }}</td>
+              <td class="editIcon text-center">
+                <nb-icon pack="eva" class="btn-details" style="color:darkorange" icon="edit-outline" (click)="onUpdateUser(user.id)"></nb-icon>
+                <nb-icon pack="eva" class="btn-details" icon="trash-outline" style="color: red" (click)="onDeleteUser(user.id)"></nb-icon>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <nb-card-footer>
+          <div class="d-flex justify-content-between">
+            <ul class="list-group list-group-horizontal">
+              <li class="list-group-item">
+                <button (click)="onPageNumberChange(0)"
+                        [ngClass]="users.first ? 'text-gray disabled border-light' : 'text-black'" class="btn">
+                  <span><<</span>
+                </button>
+              </li>
+              <li class="list-group-item">
+                <button (click)="onPageNumberChange(users.number-1)"
+                        [ngClass]="users.first ? 'text-gray disabled border-light' : 'text-black'" class="btn">
+                  <nb-icon pack="eva" icon="arrow-circle-right-outline"></nb-icon>
+                </button>
+              </li>
+              <li class="list-group-item" *ngFor='let nbr of toTotalPages(users.totalPages <9 ? users.totalPages : 9) ;let i = index'>
+                <span *ngIf="(users.number <= users.totalPages-9) || (users.totalPages <9);else printlastPages">
+                  <button (click)="onPageNumberChange(users.number <= 5 ? i : users.number-4+i)"
+                          [ngClass]="users.number==(users.number <= 5 ? i : users.number-4 + i) ?'text-black custom-bg' : 'text-balck'"
+                          class="btn ">
+                    {{(users.number <= 5 ? 1 + i : users.number - 3 + i)}}
+                  </button>
+                </span>
+                <ng-template #printlastPages>
+                  <button (click)="onPageNumberChange(users.totalPages - 9 + i)"
+                          [ngClass]="users.number==(users.totalPages - 9 + i) ?'text-light custom-bg' : 'text-black'"
+                          class="btn ">
+                    {{(users.totalPages - 8 + i)}}
+                  </button>
+                </ng-template>
+              </li>
+              <li class="list-group-item">
+                <button (click)="onPageNumberChange(users.number+1)"
+                        [ngClass]="users.last ? 'text-gray disabled border-light' : 'text-black'" class="btn">
+                  <nb-icon icon="arrow-circle-left-outline" pack="eva"></nb-icon>
+                </button>
+              </li>
+              <li class="list-group-item">
+                <button (click)="onPageNumberChange(users.totalPages -1 )"
+                        [ngClass]="users.last ? 'text-gray disabled border-light' : 'text-black'" class="btn">
+                  <span>>></span>
+                </button>
+              </li>
+            </ul>
+            <div>Éléments par page :
+              <nb-select size="small" placeholder="Élément par page" selected="{{data?.size}}"
+                         (selectedChange)="onElementPerPageChange($event)">
+                <nb-option value="10">10</nb-option>
+                <nb-option value="20">20</nb-option>
+                <nb-option value="50">50</nb-option>
+                <nb-option value="100">100</nb-option>
+              </nb-select>
+            </div>
+          </div>
+        </nb-card-footer>
+      </ng-template>
+      <ng-template [ngIf]="!users">
+        <nb-card-body>
+          Aucun utilisateur pour le moment
+        </nb-card-body>
+      </ng-template>
+    </nb-card-body>
     <nb-card-footer>
     </nb-card-footer>
   </ng-container>
-<ng-container *ngIf="loading">
-</ng-container>
+  <ng-container *ngIf="loading">
+    <!-- Loading indicator -->
+  </ng-container>
 </nb-card>
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 import {Injectable} from '@angular/core';

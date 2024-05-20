@@ -247,3 +247,16 @@ export interface User {
   roles?:string[];
 }
 ---------------------------------------------------------------------------------------
+ public Contrat saveContrat(ContratDTO contratDTO) {
+        User user = userRepository.findById(contratDTO.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + contratDTO.getUserId()));
+        Fournisseur fournisseur = fournisseurRepository.findById(contratDTO.getFournisseurId())
+                .orElseThrow(() -> new ResourceNotFoundException("Fournisseur not found with id " + contratDTO.getFournisseurId()));
+        
+        Contrat contrat = new Contrat();
+        contrat.setUser(user);
+        contrat.setFournisseur(fournisseur);
+        contrat.setDetails(contratDTO.getDetails());
+        
+        return contratRepository.save(contrat);
+    }

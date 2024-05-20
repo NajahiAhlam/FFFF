@@ -259,4 +259,19 @@ export interface User {
         contrat.setDetails(contratDTO.getDetails());
         
         return contratRepository.save(contrat);
+    }**
+
+        public ContratDTO saveContrat(ContratDTO contratDTO) {
+        User user = userRepository.findById(contratDTO.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + contratDTO.getUserId()));
+        Fournisseur fournisseur = fournisseurRepository.findById(contratDTO.getFournisseurId())
+                .orElseThrow(() -> new ResourceNotFoundException("Fournisseur not found with id " + contratDTO.getFournisseurId()));
+        
+        Contrat contrat = contratMapper.toContrat(contratDTO);
+        contrat.setUser(user);
+        contrat.setFournisseur(fournisseur);
+        
+        Contrat savedContrat = contratRepository.save(contrat);
+        
+        return contratMapper.toContratDTO(savedContrat);
     }

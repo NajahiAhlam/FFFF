@@ -1,108 +1,270 @@
-It seems like you're experiencing an issue where updating data via Postman results in some fields being saved as `null`. This can be caused by several issues such as mismatched field names, incorrect data types, or issues within the DTO or entity mappings.
+package com.example.cockpit.service;
 
-Here's a checklist to help debug and resolve this issue:
+import com.example.cockpit.dtos.FournisseurDTO;
+import com.example.cockpit.dtos.LeadDTO;
+import com.example.cockpit.dtos.response.ObjectPagination;
+import com.example.cockpit.entities.Fournisseur;
+import com.example.cockpit.entities.Lead;
+import com.example.cockpit.entities.User;
+import com.example.cockpit.repositories.FournisseurRepository;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
 
-1. **Check Field Names**:
-   Ensure that the field names in your `ContratDTO` match the field names expected by your entity `Contrat`. Any mismatch can result in `null` values being saved.
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-2. **Validate DTO to Entity Mapping**:
-   Verify that your `modelMapper` configuration correctly maps all fields from `ContratDTO` to `Contrat`.
+@Service
+public class FournisseurServiceImp implements FournisseurService {
 
-3. **DTO Validation**:
-   Ensure that `ContratDTO` is being properly populated before it reaches your service layer. You can add logging to check the values in `contratDTO`.
+    private final FournisseurRepository fournisseurRepository;
+    @Autowired
+    private ModelMapper modelMapper;
 
-4. **Check for Null Values in DTO**:
-   Add checks to ensure `contratDTO` does not contain `null` values for fields that are required.
-
-5. **Logging**:
-   Add logging statements to inspect the values before and after mapping to identify where `null` values might be introduced.
-
-6. **Inspect Request Payload**:
-   Verify that the JSON payload sent from Postman contains all the required fields and matches the structure expected by your application.
-
-Here’s an example of how you might add logging to inspect the values and ensure proper mapping:
-
-### Updated Code with Logging
-
-```java
-public ContratDTO updateOne(Long id, ContratDTO contratDTO) {
-    log.info("Updating Contrat with ID: {}", id);
-    log.info("ContratDTO: {}", contratDTO);
-
-    Contrat contrat = contratRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Contrat with ID " + id + " not found"));
-
-    log.info("Existing Contrat: {}", contrat);
-
-    contrat.setCorrespondant(contratDTO.getCorrespondant());
-    contrat.setLeadContrat(contratDTO.getLeadContrat());
-    contrat.setContratInitial(contratDTO.getContratInitial());
-    contrat.setCommentaire(contratDTO.getCommentaire());
-    contrat.setDateSignatureContrat(contratDTO.getDateSignatureContrat());
-    contrat.setDateValiditeContrat(contratDTO.getDateValiditeContrat());
-    contrat.setDateValiditeKYS(contratDTO.getDateValiditeKYS());
-    contrat.setDelaisPaiement(contratDTO.getDelaisPaiement());
-    contrat.setDevise(contratDTO.getDevise());
-    contrat.setStatus(contratDTO.getStatus());
-    contrat.setMontantHt(contratDTO.getMontantHt());
-    contrat.setType(contratDTO.getType());
-    contrat.setFrequencePaiement(contratDTO.getFrequencePaiement());
-    contrat.setFrequencePaiementNom(contratDTO.getFrequencePaiementNom());
-    contrat.setFile(contratDTO.getFile());
-
-    if (contratDTO.getFournisseurId() != 0L) {
-        Fournisseur fournisseur = fournisseurRepository.findById(contratDTO.getFournisseurId())
-                .orElseThrow(() -> new IllegalArgumentException("Fournisseur with ID " + contratDTO.getFournisseurId() + " not found"));
-        contrat.setFournisseur(fournisseur);
+    public FournisseurServiceImp(FournisseurRepository fournisseurRepository){
+        this.fournisseurRepository = fournisseurRepository;
+    }
+    @Override
+    public FournisseurDTO save(FournisseurDTO fournisseurDTO) {
+        Fournisseur fournisseur = modelMapper.map(fournisseurDTO, Fournisseur.class);
+        fournisseur = fournisseurRepository.save(fournisseur);
+        return modelMapper.map(fournisseur, FournisseurDTO.class);
     }
 
-    if (contratDTO.getUserId() != 0L) {
-        User user = userRepository.findById(contratDTO.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User with ID " + contratDTO.getUserId() + " not found"));
-        contrat.setUser(user);
+    @Override
+    public Optional<FournisseurDTO> getOne(Long id) {
+        Optional<Fournisseur> fournisseur = fournisseurRepository.findById(id);
+        return fournisseur.map(fournisseur1 -> modelMapper.map(fournisseur, FournisseurDTO.class));
     }
 
-    log.info("Updated Contrat: {}", contrat);
+    @Override
+    public void deleteById(Long id) {
+        fournisseurRepository.deleteById(id);
 
-    contratRepository.save(contrat);
+    }
 
-    ContratDTO updatedContratDTO = modelMapper.map(contrat, ContratDTO.class);
-    log.info("Mapped Updated ContratDTO: {}", updatedContratDTO);
+    @Override
+    public FournisseurDTO updateOne(Long id, FournisseurDTO fournisseurDTO) {
+        Optional<Fournisseur> optionalFournisseur = fournisseurRepository.findById(id);
+        if (optionalFournisseur.isPresent()) {
+            Fournisseur fournisseur = optionalFournisseur.get();
+            fournisseur.setNom(fournisseurDTO.getNom());
+            fournisseur.setDescription(fournisseurDTO.getDescription());
+            fournisseur.setDateModification(LocalDateTime.now());
 
-    return updatedContratDTO;
+            fournisseur = fournisseurRepository.save(fournisseur);
+            return modelMapper.map(fournisseur, FournisseurDTO.class);
+        } else {
+            throw new IllegalArgumentException("Programme with ID " + id + " not found");
+        }    }
+
+
+    @Override
+    public ObjectPagination<FournisseurDTO> getAllFournisseur(int page, int size, String sortDirection, String sortValue) {
+        Page<Fournisseur> pageOfFournisseur = fournisseurRepository.findAll(PageRequest.of(page, size, Sort.by(Objects.equals(sortDirection, "ASC") ? Sort.Direction.ASC : Sort.Direction.DESC, sortValue)));
+        ObjectPagination<FournisseurDTO> pagination = new ObjectPagination<>();
+        pagination.setContent(pageOfFournisseur.stream().map(data -> modelMapper.map(data, FournisseurDTO.class)).collect(Collectors.toList()));
+        pagination.setLast(pageOfFournisseur.isLast());
+        pagination.setFirst(pageOfFournisseur.isFirst());
+        pagination.setTotalElements((int) pageOfFournisseur.getTotalElements());
+        pagination.setTotalPages(pageOfFournisseur.getTotalPages());
+        pagination.setSize(pageOfFournisseur.getSize());
+        pagination.setNumber(pageOfFournisseur.getNumber());
+        return pagination;
+    }
+
+    @Override
+    public FournisseurDTO enabledDisabledFournisseur(Long id) {
+        Optional<Fournisseur> fournisseurOptional = fournisseurRepository.findById(id);
+        if (fournisseurOptional.isPresent()) {
+            Fournisseur fournisseur = fournisseurOptional.get();
+            fournisseur.setEnabled(!fournisseur.isEnabled());
+            fournisseurRepository.save(fournisseur);
+
+            return modelMapper.map(fournisseur, FournisseurDTO.class);
+        }
+        return null;
+    }
+
+    @Override
+    public String getFournisseurNameById(Long id) {
+        Optional<Fournisseur> fournisseurOptional = fournisseurRepository.findById(id);
+        if (fournisseurOptional.isPresent()) {
+            Fournisseur fournisseur = fournisseurOptional.get();
+            return fournisseur.getNom();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public List<FournisseurDTO> getAll() {
+        List<Fournisseur> fournisseurs = fournisseurRepository.findAll();
+        return fournisseurs.stream().map(data-> modelMapper.map(data, FournisseurDTO.class)).collect(Collectors.toList());
+    }
+
+    @Override
+    public Long count() {
+        return fournisseurRepository.count();
+    }
 }
-```
+import { Component } from '@angular/core';
+import { NbWindowControlButtonsConfig, NbWindowRef, NbWindowService } from '@nebular/theme';
+import { DialogContratComponent } from '../../component/dialog-contrat/dialog-contrat.component';
+import { Contrat } from 'src/app/@core/models/contrat.model';
+import { AppDataState, DataStateEnum } from 'src/app/@core/state';
+import { Observable, catchError, defaultIfEmpty, filter, forkJoin, map, of, startWith, switchMap } from 'rxjs';
+import { UtilsService } from 'src/app/@core/services/utils.service';
+import { GestionContratService } from '../../services/gestion-contrat.service';
+import { ActivatedRoute } from '@angular/router';
+import { GestionFournisseurService } from 'src/app/pages/gestion-referentiel/services/gestion-fournisseur.service';
+import { GestionUtilisateurService } from 'src/app/pages/gestion-utilisateur/service/gestion-utilisateur.service';
 
-### Steps to Debug
-1. **Run the Update and Check Logs**:
-   - Run the update via Postman and check the logs to ensure all fields are being set correctly.
-   
-2. **Verify JSON Payload**:
-   - Ensure that the JSON payload sent from Postman matches the expected structure and includes all necessary fields.
+@Component({
+  selector: 'app-contrat-details',
+  templateUrl: './contrat-details.component.html',
+  styleUrls: ['./contrat-details.component.scss']
+})
+export class ContratDetailsComponent  {
+  requestId!:number
+  data$: Observable<AppDataState<Contrat>> | undefined;
+  errorMessage!: string;
+  contrat!:Contrat
+  readonly DataStateEnum = DataStateEnum;
+  detailsCardBody:boolean=true;
+  detailsFCardBody:boolean=true;
+  detailsDatesCardBody:boolean=true;
+  fournisseurName$!: Observable<string>;
+  userName$!: string;
 
-### Example JSON Payload
-Ensure your JSON payload in Postman looks something like this:
+  constructor(private _route:ActivatedRoute,
+    private windowService: NbWindowService,public gestionContratService:GestionContratService, public gestionFournisseurService: GestionFournisseurService, public gestionUserService: GestionUtilisateurService, private _utilService:UtilsService) { }
 
-```json
-{
-    "correspondant": "John Doe",
-    "leadContrat": "Lead Contrat",
-    "contratInitial": "Initial Contrat",
-    "commentaire": "Some comment",
-    "dateSignatureContrat": "2023-05-24",
-    "dateValiditeContrat": "2024-05-24",
-    "dateValiditeKYS": "2024-06-24",
-    "delaisPaiement": 30,
-    "devise": "USD",
-    "status": "Active",
-    "montantHt": 1000.0,
-    "type": "Type A",
-    "frequencePaiement": "Monthly",
-    "frequencePaiementNom": "Monthly Payment",
-    "file": "file_path",
-    "fournisseurId": 1,
-    "userId": 1
+    ngOnInit(): void {
+      this.requestId=this._route.snapshot.params['id']
+      this.userName$= this.getUserName(this.contrat.userId)
+     this.fournisseurName$= this.getFournisseurName(this.contrat.fournisseurId!)
+  
+      this.getContratDetails()
+    }
+
+    hideShowDetailsCardBody()
+    {
+      this.detailsCardBody=!this.detailsCardBody
+      
+    }
+    hideShowDetailsFCardBody(){
+      this.detailsFCardBody=!this.detailsFCardBody
+    }
+    hideShowDetailsDatesCardBody(){
+      this.detailsDatesCardBody=!this.detailsDatesCardBody
+    }
+   getContratDetails()
+    {
+      if(this.requestId)
+      {
+        this.data$=this.gestionContratService.getContrat(this.requestId)
+          .pipe(
+            map(response => {
+              this.contrat =response;
+              return ({dataState: DataStateEnum.LOADED, data: response})
+            }),
+            startWith({dataState: DataStateEnum.LOADING}),
+            catchError(err => of({
+              dataState: DataStateEnum.ERROR,
+              errorMessage: err.message,
+              this: this._utilService.displayError('Une erreur technique est survenue', "Erreur")
+            }))
+          );
+      }
+     
+    } 
+    getFournisseurName(fournisseurId: number){
+      return this.gestionFournisseurService.getFournisseurName(fournisseurId).pipe(
+        defaultIfEmpty(''),
+        map(response => response.toString())
+      );
+    }
+    
+    getUserName(userId: number) {
+      return this.gestionUserService.getUserName(userId).pipe(
+        defaultIfEmpty(''),
+        map(response => response.toString())
+      );
+    }
+ openEditForm1() {
+    console.log('id',this.requestId)
+    console.log('contrat',this.data$)
+    //if(!this.contrat){this.getContratDetails();}
+    const buttonsConfig: NbWindowControlButtonsConfig = {
+      minimize: false,
+      maximize: false,
+      fullScreen: true,
+      close: true,
+    };
+    
+    const nbWindowRef = this.windowService.open(DialogContratComponent, {
+      title: `Modifier un contrat`,
+      context: { id: this.requestId, contrat: this.contrat  }, 
+      buttons: buttonsConfig,
+    });
+
+    this.initCloseListener(nbWindowRef); 
+         
+  
+  } 
+  openEditForm() {
+    const buttonsConfig: NbWindowControlButtonsConfig = {
+      minimize: false,
+      maximize: false,
+      fullScreen: false,
+      close: true,
+    }
+    this.windowService.open(DialogContratComponent, {
+      hasBackdrop: true,
+      closeOnEsc: false,
+      buttons: buttonsConfig,
+      closeOnBackdropClick: false,
+      title:'Action sur la de modification  du contrat  N°'+this.requestId,
+      context:{
+        request:this.contrat,
+        //withFile:false
+      }
+    }).onClose.subscribe((data)=>{
+      if(data.isEdit)
+      {
+        //this.upload=true
+        this.gestionContratService.updateContrat(this.requestId,this.contrat).subscribe({
+          next:(data)=>{
+            this._utilService.displaySucess("Succée","Contrat modifié avec succès",)
+            location.reload()
+            //this.upload=false
+          },
+          error:(err=>{
+            //this.upload=false
+          })
+        })
+      }
+    })
+  }
+
+  
+  private initCloseListener(windowRef: NbWindowRef) {
+    windowRef?.onClose.subscribe({
+      next: (res) => {
+        if (res === 'SUCESS') console.log('succes')
+      },
+
+      error: (err) => console.error(`Observer got an error: ${err}`),
+    });
+  }
+
+ 
+
 }
-```
-
-By following these steps and adding logging, you should be able to identify where the `null` values are being introduced and ensure that all fields are properly updated.

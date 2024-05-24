@@ -1,14 +1,10 @@
 FournisseurNameDTO getFournisseurNameById(Long id);
 @Override
-public FournisseurNameDTO getFournisseurNameById(Long id) {
+public String getFournisseurNameById(Long id) {
     Optional<Fournisseur> fournisseurOptional = fournisseurRepository.findById(id);
-    if (fournisseurOptional.isPresent()) {
-        Fournisseur fournisseur = fournisseurOptional.get();
-        return new FournisseurNameDTO(fournisseur.getNom());
-    } else {
-        return null;
-    }
+    return fournisseurOptional.map(Fournisseur::getNom).orElse(null);
 }
+
 @GetMapping("/name/{id}")
 public ResponseEntity<FournisseurNameDTO> getFournisseurName(@PathVariable Long id) {
     FournisseurNameDTO fournisseurNameDTO = fournisseurService.getFournisseurNameById(id);
